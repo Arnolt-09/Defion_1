@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DeFi Landing Page – React + Tailwind</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React + ReactDOM + Babel (untuk belajar, tanpa setup) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@400;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #080b0f; font-family: 'Space Grotesk', sans-serif; color: #fff; overflow-x: hidden; }
+    .font-display { font-family: 'Outfit', sans-serif; }
+
+    /* Glow effects */
+    .glow-green { box-shadow: 0 0 30px rgba(74, 222, 128, 0.3); }
+    .text-glow { text-shadow: 0 0 40px rgba(74, 222, 128, 0.5); }
+
+    /* Animated gradient orb */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: float 8s ease-in-out infinite;
+    }
+    .orb-1 { width: 500px; height: 500px; background: radial-gradient(circle, #4ade80, #065f46); top: -100px; left: 20%; animation-delay: 0s; }
+    .orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, #22d3ee, #1e3a8a); bottom: 100px; right: 10%; animation-delay: 3s; }
+    .orb-3 { width: 300px; height: 300px; background: radial-gradient(circle, #a78bfa, #4c1d95); top: 300px; left: -50px; animation-delay: 5s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-30px) scale(1.05); }
+    }
+
+    /* Grid background */
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(74,222,128,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74,222,128,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* Floating asset nodes */
+    .node {
+      position: absolute;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(74,222,128,0.2);
+      border-radius: 12px;
+      padding: 8px 14px;
+      backdrop-filter: blur(10px);
+      font-size: 12px;
+      animation: nodeFloat 6s ease-in-out infinite;
+    }
+    @keyframes nodeFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    /* Shimmer animation */
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .shimmer-text {
+      background: linear-gradient(90deg, #fff 30%, #4ade80 50%, #fff 70%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 4s linear infinite;
+    }
+
+    /* Navbar glassmorphism */
+    .glass-nav {
+      background: rgba(8, 11, 15, 0.7);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(74,222,128,0.1);
+    }
+
+    /* Card hover */
+    .card-hover {
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .card-hover:hover {
+      border-color: rgba(74,222,128,0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(74,222,128,0.1);
+    }
+
+    /* Ticker animation */
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .ticker-inner { animation: ticker 20s linear infinite; display: flex; white-space: nowrap; }
+
+    /* Pulse dot */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .pulse-dot { animation: pulse 2s ease-in-out infinite; }
+
+    /* Scan line */
+    @keyframes scanline {
+      0% { top: 0%; }
+      100% { top: 100%; }
+    }
+    .scanline {
+      position: absolute; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(74,222,128,0.4), transparent);
+      animation: scanline 3s ease-in-out infinite;
+    }
+
+    /* Scroll reveal animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal-left.revealed {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .reveal-right {
+      opacity: 0;
+      transform: translateX(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal-right.revealed {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .reveal-scale {
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal-scale.revealed {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Stagger delays */
+    .delay-100 { transition-delay: 0.1s; }
+    .delay-200 { transition-delay: 0.2s; }
+    .delay-300 { transition-delay: 0.3s; }
+    .delay-400 { transition-delay: 0.4s; }
+    .delay-500 { transition-delay: 0.5s; }
+
+    /* EXIT animations — saat scroll ke atas */
+    /* reveal keluar ke atas */
+    .reveal.exit-up    { opacity: 0; transform: translateY(-30px); }
+    .reveal.exit-down  { opacity: 0; transform: translateY(40px);  }
+
+    /* reveal-left keluar ke kiri */
+    .reveal-left.exit-up   { opacity: 0; transform: translateX(-40px); }
+    .reveal-left.exit-down { opacity: 0; transform: translateX(-40px); }
+
+    /* reveal-right keluar ke kanan */
+    .reveal-right.exit-up   { opacity: 0; transform: translateX(40px); }
+    .reveal-right.exit-down { opacity: 0; transform: translateX(40px); }
+
+    /* reveal-scale keluar dengan zoom out */
+    .reveal-scale.exit-up   { opacity: 0; transform: scale(0.88); }
+    .reveal-scale.exit-down { opacity: 0; transform: scale(0.92); }
+
+    /* Number counter glow */
+    .stat-glow { transition: text-shadow 0.3s ease; }
+    .stat-glow:hover { text-shadow: 0 0 20px rgba(74,222,128,0.6); }
+
+    /* Scroll Reveal CSS */
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            syne: ['Outfit', 'sans-serif'],
+            grotesk: ['Space Grotesk', 'sans-serif'],
+          },
+          colors: {
+            green: { 400: '#4ade80', 500: '#22c55e', 900: '#14532d' },
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+// =========================================
+// HOOK: useScrollReveal — BIDIRECTIONAL
+// Animasi muncul saat scroll bawah,
+// hilang saat scroll atas, muncul lagi!
+// =========================================
+function useScrollReveal() {
+  React.useEffect(() => {
+    // Lacak posisi scroll sebelumnya
+    let lastScrollY = window.scrollY;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const currentScrollY = window.scrollY;
+        const scrollingDown = currentScrollY >= lastScrollY;
+        lastScrollY = currentScrollY;
+
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Masuk viewport → tampilin animasi
+            entry.target.classList.add('revealed');
+            entry.target.classList.remove('exit-up', 'exit-down');
+          } else {
+            // Keluar viewport → sembunyikan dengan arah yg sesuai
+            entry.target.classList.remove('revealed');
+            if (scrollingDown) {
+              // Elemen keluar ke atas saat scroll bawah
+              entry.target.classList.add('exit-up');
+              entry.target.classList.remove('exit-down');
+            } else {
+              // Elemen keluar ke bawah saat scroll atas
+              entry.target.classList.add('exit-down');
+              entry.target.classList.remove('exit-up');
+            }
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+    );
+
+    const elements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
+}
+
+// =========================================
+// COMPONENT: Navbar
+// =========================================
+function Navbar() {
+  const navLinks = ['Home', 'DeFi App', 'Assets', 'Features', 'Pricing', 'FAQ'];
+  return (
+    <nav className="glass-nav fixed top-0 left-0 right-0 z-50 px-8 py-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+
+        {/* Logo */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="w-7 h-7 rounded-full border border-green-400/70 flex items-center justify-center relative">
+            <span className="text-green-400 text-xs font-bold">◎</span>
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-400 border border-black"></span>
+          </div>
+          <span className="font-syne font-bold text-white text-base">Defion</span>
+        </div>
+
+        {/* Center — links + Protection badge */}
+        <div className="hidden md:flex items-center gap-1 bg-white/[0.04] border border-white/[0.07] rounded-full px-3 py-1.5">
+          {navLinks.map((link, i) => (
+            <a key={i} href="#"
+              className={`text-xs px-3 py-1 rounded-full transition-all duration-200 ${
+                i === 0
+                  ? 'text-white bg-white/10'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}>
+              {link}
+            </a>
+          ))}
+
+          {/* Protection badge — seperti di referensi */}
+          <div className="flex items-center gap-1.5 ml-1 bg-white/[0.06] border border-white/10 rounded-full px-3 py-1 text-xs text-gray-300">
+            <span className="text-green-400 text-xs">↗</span>
+            Protection
+            <span className="w-5 h-5 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-xs">🛡</span>
+          </div>
+        </div>
+
+        {/* Right — Create Account + dot */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button className="hidden md:flex text-xs text-gray-400 hover:text-white transition-colors items-center gap-1.5">
+            <span className="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            Create Account
+          </button>
+          {/* Dot indicator */}
+          <div className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+            <span className="w-2 h-2 rounded-full bg-green-400 pulse-dot"></span>
+          </div>
+        </div>
+
+      </div>
+    </nav>
+  );
+}
+
+// =========================================
+// COMPONENT: Hero Section
+// =========================================
+function Hero() {
+  return (
+    <section className="relative min-h-screen flex items-center justify-center grid-bg overflow-hidden pt-20">
+      {/* Background orbs */}
+      <div className="orb orb-1"></div>
+      <div className="orb orb-2"></div>
+      <div className="orb orb-3"></div>
+
+      {/* Floating asset nodes */}
+      <div className="node" style={{top:'28%', left:'8%', animationDelay:'0s'}}>
+        <div className="text-gray-400 text-xs">Cortex</div>
+        <div className="text-green-400 font-semibold text-sm">20,845</div>
+      </div>
+      <div className="node" style={{top:'20%', right:'10%', animationDelay:'1.5s'}}>
+        <div className="text-gray-400 text-xs">Quant</div>
+        <div className="text-green-400 font-semibold text-sm">0.846</div>
+      </div>
+      <div className="node" style={{bottom:'30%', left:'6%', animationDelay:'3s'}}>
+        <div className="text-gray-400 text-xs">Aelf</div>
+        <div className="text-green-400 font-semibold text-sm">13.348</div>
+      </div>
+      <div className="node" style={{bottom:'28%', right:'7%', animationDelay:'2s'}}>
+        <div className="text-gray-400 text-xs">Meeton</div>
+        <div className="text-white font-semibold text-sm">+2.4%</div>
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
+
+        {/* Badge - di atas heading */}
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-xs text-gray-300 backdrop-blur-sm">
+            <span className="pulse-dot w-2 h-2 rounded-full bg-green-400 inline-block"></span>
+            Unlock Your Assets Spark!
+            <span className="text-green-400 font-bold">+</span>
+          </div>
+        </div>
+
+        <h1 className="font-syne font-black leading-none mb-6" style={{fontSize: 'clamp(3rem, 8vw, 7rem)', letterSpacing: '-0.02em'}}>
+          <span className="text-white">One-click for </span>
+          <span className="shimmer-text">Asset Defense</span>
+        </h1>
+        <p className="text-gray-400 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+          Dive into the art assets, where innovative blockchain technology meets financial expertise
+        </p>
+
+        {/* CTAs */}
+        <div className="flex items-center justify-center gap-4">
+          <button className="flex items-center gap-2 bg-white/10 border border-white/10 text-white px-6 py-3 rounded-full text-sm hover:bg-white/20 transition-all backdrop-blur-sm">
+            <span className="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>
+            Open App
+          </button>
+          <button className="bg-green-400 text-black font-semibold px-6 py-3 rounded-full text-sm hover:bg-green-300 transition-all glow-green">
+            Discover More →
+          </button>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="mt-16 flex items-center justify-between px-4">
+          <div className="text-xs text-gray-600">02/03 · Scroll down</div>
+          <div className="text-xs text-gray-500">DeFi horizons</div>
+        </div>
+      </div>
+
+      {/* Bottom chart decoration */}
+      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-end gap-1 opacity-30">
+        {[40,60,35,80,55,70,45,90,60,75].map((h, i) => (
+          <div key={i} className="w-1 bg-green-400 rounded-full transition-all" style={{height: `${h}px`}}></div>
+        ))}
+      </div>
+
+      {/* Partner logos */}
+      <div className="absolute bottom-4 left-0 right-0 overflow-hidden">
+        <div className="ticker-inner gap-12 text-gray-600 text-xs">
+          {['▲ Vercel','⊕ loom','⊞ Cash App','⊙ Loops','⋈ zapier','▷ ramp','◎ Raycast',
+            '▲ Vercel','⊕ loom','⊞ Cash App','⊙ Loops','⋈ zapier','▷ ramp','◎ Raycast'].map((p,i) => (
+            <span key={i} className="mx-6 text-gray-500 hover:text-gray-300 transition-colors cursor-default">{p}</span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =========================================
+// COMPONENT: Stats Bar
+// =========================================
+function StatsBar() {
+  const stats = [
+    { label: 'Total Assets', value: '$2.4B', change: '+12.4%' },
+    { label: 'Active Users', value: '184K', change: '+8.2%' },
+    { label: 'Success Rate', value: '98.2%', change: '+0.4%' },
+    { label: 'Transactions', value: '4.7M', change: '+22.1%' },
+  ];
+  return (
+    <div className="border-y border-white/5 bg-white/[0.02] py-6">
+      <div className="max-w-7xl mx-auto px-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+        {stats.map((s, i) => (
+          <div key={i} className={`text-center reveal delay-${i*100+100}`}>
+            <div className="text-2xl font-syne font-bold text-white stat-glow">{s.value}</div>
+            <div className="text-xs text-gray-400 mt-1">{s.label}</div>
+            <div className="text-xs text-green-400 mt-1">{s.change}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// =========================================
+// COMPONENT: Features Section
+// =========================================
+function Features() {
+  const features = [
+    {
+      icon: '◈',
+      title: 'Meet Marvellous Insights',
+      desc: 'Dive into real-time data analytics that help you make smarter decisions on DeFi assets.',
+      tag: 'Analytics',
+      chart: true,
+    },
+    {
+      icon: '◎',
+      title: 'DeFi Wallet',
+      desc: 'Experience next-level DeFi Wallet to securely through the vast possibilities.',
+      tag: 'Security',
+      ring: true,
+    },
+    {
+      icon: '◉',
+      title: 'Asset Protection',
+      desc: 'One-click defense mechanism to shield your portfolio from market volatility.',
+      tag: 'Defense',
+    },
+    {
+      icon: '⊕',
+      title: 'Smart Liquidity',
+      desc: 'Automated liquidity management that maximizes your yield across all pools.',
+      tag: 'Yield',
+    },
+  ];
+
+  return (
+    <section className="py-24 px-8 max-w-7xl mx-auto">
+      <div className="text-center mb-16 reveal">
+        <div className="text-green-400 text-sm font-medium mb-3 tracking-widest uppercase">Platform Features</div>
+        <h2 className="font-syne text-5xl font-bold text-white">
+          Everything you need to<br/>
+          <span className="text-gray-300">dominate DeFi</span>
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Big card */}
+        <div className="card-hover bg-white/[0.03] rounded-2xl p-8 relative overflow-hidden reveal-left" style={{gridRow: 'span 2'}}>
+          <div className="scanline"></div>
+          <div className="text-green-400 text-2xl mb-4">{features[0].icon}</div>
+          <span className="text-xs bg-green-400/10 text-green-400 border border-green-400/20 px-2 py-0.5 rounded-full">{features[0].tag}</span>
+          <h3 className="font-syne text-2xl font-bold text-white mt-4 mb-2">{features[0].title}</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-6">{features[0].desc}</p>
+
+          {/* Mini chart */}
+          <div className="bg-black/30 rounded-xl p-4 border border-white/5">
+            <div className="text-green-400 text-3xl font-syne font-bold">98.2%</div>
+            <div className="text-xs text-gray-400 mb-3">Success Transactions</div>
+            <div className="flex items-end gap-1 h-16">
+              {[30,50,40,70,55,80,65,90,75,85,70,95].map((h,i) => (
+                <div key={i} className="flex-1 rounded-t"
+                  style={{height:`${h}%`, background: i > 8 ? '#4ade80' : 'rgba(255,255,255,0.15)'}}></div>
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-gray-400 mt-2">
+              <span>Jan</span><span>Apr</span><span>Jul</span><span>Oct</span><span>Dec</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Wallet card */}
+        <div className="card-hover bg-white/[0.03] rounded-2xl p-8 relative overflow-hidden reveal-right delay-100">
+          <div className="text-green-400 text-2xl mb-4">{features[1].icon}</div>
+          <span className="text-xs bg-green-400/10 text-green-400 border border-green-400/20 px-2 py-0.5 rounded-full">{features[1].tag}</span>
+          <h3 className="font-syne text-xl font-bold text-white mt-4 mb-2">{features[1].title}</h3>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">{features[1].desc}</p>
+          {/* Wallet ring visual */}
+          <div className="flex items-center justify-center mt-2">
+            <div className="relative w-24 h-24">
+              <div className="absolute inset-0 rounded-full border-4 border-green-400/20"></div>
+              <div className="absolute inset-2 rounded-full border-2 border-green-400/40"></div>
+              <div className="absolute inset-4 rounded-full bg-green-400/10 flex items-center justify-center">
+                <span className="text-green-400 font-syne font-bold text-sm">+A3.7</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom 2 cards */}
+        {features.slice(2).map((f, i) => (
+          <div key={i} className={`card-hover bg-white/[0.03] rounded-2xl p-6 reveal-right delay-${(i+2)*100}`}>
+            <div className="text-green-400 text-xl mb-3">{f.icon}</div>
+            <span className="text-xs bg-white/5 text-gray-300 border border-white/10 px-2 py-0.5 rounded-full">{f.tag}</span>
+            <h3 className="font-syne text-lg font-bold text-white mt-3 mb-2">{f.title}</h3>
+            <p className="text-gray-300 text-sm leading-relaxed">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// =========================================
+// COMPONENT: DeFi Wallet Section
+// =========================================
+function DeFiWalletSection() {
+  const [progress, setProgress] = React.useState(0);
+  const [activeTag, setActiveTag] = React.useState('Decentralized');
+  const [txVisible, setTxVisible] = React.useState(false);
+  const sectionRef = React.useRef(null);
+
+  // Animasi progress circle saat masuk viewport — reset saat keluar
+  React.useEffect(() => {
+    let intervalRef = null;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          // Reset & mulai animasi
+          setProgress(0);
+          setTxVisible(false);
+          setTimeout(() => {
+            setTxVisible(true);
+            let start = 0;
+            const target = 72;
+            intervalRef = setInterval(() => {
+              start += 1.5;
+              setProgress(Math.min(start, target));
+              if (start >= target) clearInterval(intervalRef);
+            }, 20);
+          }, 200);
+        } else {
+          // Keluar viewport → reset supaya bisa animasi lagi
+          if (intervalRef) clearInterval(intervalRef);
+          setProgress(0);
+          setTxVisible(false);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => { observer.disconnect(); if (intervalRef) clearInterval(intervalRef); };
+  }, []);
+
+  const transactions = [
+    { type: 'Sent',     icon: '↗', amount: '0.0004968', from: 'from 0×938',  coin: 'VAREN',  color: '#f87171' },
+    { type: 'Received', icon: '↙', amount: '1.038',     from: 'from 0×847',  coin: 'BANCOR', color: '#4ade80' },
+    { type: 'Sent',     icon: '↗', amount: '4.94863',   from: 'from ×7360',  coin: 'BNB',    color: '#f87171' },
+    { type: 'Pending',  icon: '⟳', amount: '—',         from: 'processing',  coin: '...',    color: '#facc15' },
+  ];
+
+  const tags1 = ['2.7k Assets', 'Success', 'Decentralized', 'Smart C'];
+  const tags2 = ['Tokenized Trust', 'DeFi - Revolution', 'LiquidityLeaders'];
+
+  // SVG circle progress — SVG 200x200, center 100,100
+  const radius = 75;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDash = circumference - (progress / 100) * circumference;
+
+  return (
+    <section ref={sectionRef} className="py-24 px-8 overflow-hidden">
+      <div className="max-w-7xl mx-auto">
+
+        {/* Header */}
+        <div className="text-center mb-16 reveal">
+          <h2 className="font-syne text-5xl font-bold text-white mb-3">DeFi Wallet</h2>
+          <p className="text-gray-400 text-sm max-w-md mx-auto">
+            Exploratory mission with DeFi Horizon & navigating through the vast possibilities
+          </p>
+          <div className="mt-6">
+            <button className="border border-white/20 text-white text-sm px-6 py-2 rounded-full hover:border-green-400/50 hover:text-green-400 transition-all">
+              How it works?
+            </button>
+          </div>
+        </div>
+
+        {/* Main content grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+
+          {/* LEFT — Transaction list */}
+          <div className="reveal-left">
+            <div className="mb-4">
+              <div className="text-gray-400 text-xs mb-1 uppercase tracking-widest">DeFi Wallet System</div>
+              <div className="font-syne text-5xl font-black text-white">+A3.7</div>
+            </div>
+
+            <div className="space-y-3 mt-8">
+              {transactions.map((tx, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 py-3 backdrop-blur-sm"
+                  style={{
+                    opacity: txVisible ? 1 : 0,
+                    transform: txVisible ? 'translateX(0)' : 'translateX(-30px)',
+                    transition: `all 0.5s ease ${i * 0.12}s`
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm"
+                      style={{color: tx.color}}>
+                      {tx.icon}
+                    </div>
+                    <div>
+                      <div className="text-white text-sm font-medium">{tx.type}</div>
+                      <div className="text-gray-500 text-xs">{tx.from}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-white text-sm font-semibold">{tx.amount}</div>
+                    <div className="text-gray-500 text-xs">{tx.coin}</div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Pending indicator */}
+              <div className="text-center py-2">
+                <span className="text-xs text-gray-600 flex items-center justify-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 pulse-dot inline-block"></span>
+                  Pending
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT — Circular progress + Step */}
+          <div className="flex flex-col items-center gap-6 reveal-right">
+
+            {/* Label Target — di ATAS circle, tidak nabrak */}
+            <div className="flex items-center gap-2 self-end mr-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+              <div className="text-xs text-gray-400 leading-tight">
+                <span className="text-gray-300 font-medium">Target 2024</span>
+                <span className="text-green-400 ml-1.5">· DeFi app</span>
+              </div>
+            </div>
+
+            {/* Circular progress */}
+            <div className="relative">
+              <svg width="200" height="200" className="rotate-[-90deg]">
+                {/* Track */}
+                <circle cx="100" cy="100" r={radius}
+                  fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="14"/>
+                {/* Progress */}
+                <circle cx="100" cy="100" r={radius}
+                  fill="none"
+                  stroke="url(#progressGrad)"
+                  strokeWidth="14"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDash}
+                  style={{transition: 'stroke-dashoffset 0.05s linear'}}
+                />
+                <defs>
+                  <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#4ade80"/>
+                    <stop offset="100%" stopColor="#22d3ee"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Center content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-green-400/20 border border-green-400/40 flex items-center justify-center mb-2">
+                  <span className="text-green-400 text-lg">⚡</span>
+                </div>
+                <div className="text-white font-syne font-bold text-lg">Step 01</div>
+                <div className="text-green-400 text-xs font-semibold mt-0.5">{Math.round(progress)}%</div>
+              </div>
+            </div>
+
+            {/* Done badge */}
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-5 py-2">
+              <span className="w-2 h-2 rounded-full bg-green-400 pulse-dot"></span>
+              <span className="text-white text-sm font-medium">Done</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tag pills row */}
+        <div className="mt-16 reveal">
+          <div className="flex flex-wrap gap-2 justify-center mb-3">
+            {tags1.map((tag, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTag(tag)}
+                className="px-4 py-1.5 rounded-full text-xs font-medium border transition-all duration-200"
+                style={{
+                  background: activeTag === tag ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.04)',
+                  borderColor: activeTag === tag ? 'rgba(74,222,128,0.5)' : 'rgba(255,255,255,0.08)',
+                  color: activeTag === tag ? '#4ade80' : '#9ca3af'
+                }}
+              >
+                {activeTag === tag && <span className="mr-1.5">⬡</span>}
+                {tag}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {tags2.map((tag, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTag(tag)}
+                className="px-4 py-1.5 rounded-full text-xs font-medium border transition-all duration-200"
+                style={{
+                  background: activeTag === tag ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.04)',
+                  borderColor: activeTag === tag ? 'rgba(74,222,128,0.5)' : 'rgba(255,255,255,0.08)',
+                  color: activeTag === tag ? '#4ade80' : '#9ca3af'
+                }}
+              >
+                {activeTag === tag && <span className="mr-1.5">⬡</span>}
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
+// =========================================
+// COMPONENT: CTA Section
+// =========================================
+function CTA() {
+  return (
+    <section className="py-24 px-8">
+      <div className="max-w-4xl mx-auto text-center relative reveal-scale">
+        <div className="absolute inset-0 bg-green-400/5 rounded-3xl blur-3xl"></div>
+        <div className="relative bg-white/[0.03] border border-white/10 rounded-3xl p-16">
+          <div className="text-green-400 text-sm mb-4 tracking-widest uppercase">Get Started Today</div>
+          <h2 className="font-syne text-5xl font-bold text-white mb-6">
+            Ready to defend<br/>your assets?
+          </h2>
+          <p className="text-gray-300 mb-10 max-w-md mx-auto">
+            Join 184,000+ users already protecting their DeFi portfolio with one click.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button className="bg-green-400 text-black font-semibold px-8 py-4 rounded-full text-sm hover:bg-green-300 transition-all glow-green w-full sm:w-auto">
+              Start For Free →
+            </button>
+            <button className="border border-white/20 text-white px-8 py-4 rounded-full text-sm hover:border-green-400/50 hover:text-green-400 transition-all w-full sm:w-auto">
+              View Documentation
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =========================================
+// COMPONENT: Footer
+// =========================================
+function Footer() {
+  return (
+    <footer className="border-t border-white/5 py-10 px-8">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-green-400 text-xl">◎</span>
+          <span className="font-syne font-bold text-white">Defion</span>
+        </div>
+        <div className="text-xs text-gray-400">© 2025 Defion. Built with React + Tailwind CSS </div>
+        <div className="flex gap-4 text-xs text-gray-500">
+          <a href="#" className="hover:text-green-400 transition-colors">Privacy</a>
+          <a href="#" className="hover:text-green-400 transition-colors">Terms</a>
+          <a href="#" className="hover:text-green-400 transition-colors">Twitter</a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// =========================================
+// APP ROOT
+// =========================================
+function App() {
+  useScrollReveal(); // 👈 Aktifkan animasi scroll di sini!
+  return (
+    <div>
+      <Navbar />
+      <Hero />
+      <StatsBar />
+      <Features />
+      <DeFiWalletSection />
+      <CTA />
+      <Footer />
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
